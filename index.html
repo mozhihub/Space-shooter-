@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Vanguard Pro Max</title>
+    <title>Neon Vanguard: Pro Audio</title>
     <style>
         :root { --neon: #00f2ff; --gold: #ffd700; --hp: #ff2d55; --boss: #a020f0; --bg: #00050f; }
         body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
         canvas { display: block; filter: saturate(1.5) contrast(1.1); background: #000; }
 
-        /* HUD */
         #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; padding: 15px; display: none; }
         .top-row { display: flex; justify-content: space-between; pointer-events: auto; }
         #menu-btn { font-size: 35px; cursor: pointer; color: var(--neon); text-shadow: 0 0 10px var(--neon); }
@@ -18,11 +17,9 @@
         #hp-fill { width: 100%; height: 100%; background: var(--hp); transition: 0.2s; }
         #sh-fill { width: 0%; height: 100%; background: var(--gold); transition: 0.2s; }
 
-        /* 3-DOT MENU */
         #menu-box { position: absolute; top: 65px; right: 15px; background: rgba(0,0,0,0.95); border: 2px solid var(--neon); display: none; flex-direction: column; pointer-events: auto; border-radius: 12px; z-index: 100; }
         #menu-box button { background: none; border: none; color: white; padding: 15px 20px; border-bottom: 1px solid #222; cursor: pointer; text-align: left; font-weight: bold; }
 
-        /* OVERLAYS */
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 200; display: none; flex-direction: column; align-items: center; padding: 25px; pointer-events: auto; overflow-y: auto; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 400px; margin-top: 15px; }
         .card { background: #0a0a0a; border: 1px solid #222; padding: 15px; border-radius: 10px; text-align: center; }
@@ -32,17 +29,18 @@
         .boss-bar { height: 8px; background: #000; border: 1px solid var(--boss); border-radius: 4px; overflow: hidden; }
         #boss-fill { width: 100%; height: 100%; background: var(--boss); }
 
-        /* START SCREEN */
-        #start-screen { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 500; cursor: pointer; text-align: center; }
+        #start-screen { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 500; cursor: pointer; }
         .play-btn { background: var(--neon); color: #000; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 20px; margin-top: 20px; box-shadow: 0 0 20px var(--neon); }
+        
+        .mute-btn { background: var(--hp); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 20px; width: 200px; }
+        .mute-btn.on { background: #4caf50; }
     </style>
 </head>
 <body>
 
 <div id="start-screen">
-    <h1 style="color:var(--neon); font-size: 40px; margin:0; text-shadow: 0 0 10px var(--neon);">NEON BLASTER</h1>
+    <h1 style="color:var(--neon); font-size: 40px; margin:0;">NEON BLASTER</h1>
     <div class="play-btn" onclick="initGame()">PLAY NOW</div>
-    <p style="color:#555; margin-top: 20px; font-size: 12px;">TOUCH OR MOVE MOUSE TO CONTROL</p>
 </div>
 
 <div id="hud">
@@ -64,30 +62,29 @@
     <button onclick="openTab('ship-shop')">🚀 SHIPS</button>
     <button onclick="openTab('shield-shop')">🛡️ SHIELDS</button>
     <button onclick="openTab('settings')">⚙️ SETTINGS</button>
+    <button onclick="closeAll()">RESUME</button>
 </div>
 
 <div id="gun-shop" class="overlay">
-    <h2>GUN SHOP</h2>
-    <div class="grid" id="gun-grid"></div>
+    <h2>GUNS</h2><div class="grid" id="gun-grid"></div>
     <button onclick="closeAll()" style="margin-top:20px; color:#fff;">BACK</button>
 </div>
 
 <div id="ship-shop" class="overlay">
-    <h2>SPACESHIPS</h2>
-    <div class="grid" id="ship-grid"></div>
+    <h2>SHUTTLES</h2><div class="grid" id="ship-grid"></div>
     <button onclick="closeAll()" style="margin-top:20px; color:#fff;">BACK</button>
 </div>
 
 <div id="shield-shop" class="overlay">
-    <h2>SHIELD SHOP</h2>
-    <div class="grid" id="shield-grid"></div>
+    <h2>SHIELDS</h2><div class="grid" id="shield-grid"></div>
     <button onclick="closeAll()" style="margin-top:20px; color:#fff;">BACK</button>
 </div>
 
 <div id="settings" class="overlay">
     <h2>SETTINGS</h2>
-    <button id="snd-toggle" onclick="toggleSound()" style="background:var(--neon); padding:10px 30px; border:none; font-weight:bold;">SOUND: ON</button>
-    <button onclick="closeAll()" style="margin-top:20px; color:#fff;">CLOSE</button>
+    <button id="sound-toggle-btn" class="mute-btn on" onclick="toggleSound()">SOUND: ON</button>
+    <p style="font-size: 12px; color: #666; margin-top: 10px;">Music & SFX will be muted</p>
+    <button onclick="closeAll()" style="margin-top:20px; color:#fff;">BACK</button>
 </div>
 
 <canvas id="c"></canvas>
@@ -98,46 +95,44 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
 let gold = 0, gunLv = 1, shipLv = 1, shieldLv = 0, hp = 100, maxHp = 100;
-let curSh = 0, maxSh = 0, soundOn = true, active = false;
-let pX = canvas.width/2, bullets = [], enemies = [], boss = null, lastFire = 0;
-
+let curSh = 0, maxSh = 0, active = false, pX = canvas.width/2;
+let bullets = [], enemies = [], boss = null, lastFire = 0;
+let soundEnabled = true;
 let audioCtx;
 
 function initGame() {
-    // Force Audio Context start
     if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-    
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('hud').style.display = 'block';
-    
-    active = true;
-    renderAll();
-    requestAnimationFrame(loop);
+    active = true; renderAll(); requestAnimationFrame(loop);
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('sound-toggle-btn');
+    btn.innerText = `SOUND: ${soundEnabled ? 'ON' : 'OFF'}`;
+    btn.className = `mute-btn ${soundEnabled ? 'on' : ''}`;
 }
 
 function playSfx(f, t, d) {
-    if(!soundOn || !audioCtx) return;
-    try {
-        let o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.type = t; o.frequency.value = f;
-        g.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start(); o.stop(audioCtx.currentTime + d);
-    } catch(e) {}
+    if(!audioCtx || !soundEnabled) return;
+    let o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = t; o.frequency.value = f;
+    g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + d);
 }
 
 function toggleMenu() { let m=document.getElementById('menu-box'); m.style.display=(m.style.display==='flex')?'none':'flex'; }
 function openTab(id) { active=false; document.getElementById(id).style.display='flex'; toggleMenu(); }
 function closeAll() { active=true; document.querySelectorAll('.overlay').forEach(e=>e.style.display='none'); }
-function toggleSound() { soundOn=!soundOn; document.getElementById('snd-toggle').innerText=`SOUND: ${soundOn?'ON':'OFF'}`; }
 
 function renderAll() {
     let gH='', sH='', shH='';
-    for(let i=1; i<=20; i++) gH+=`<div class="card"><h3>Gun v${i}</h3><button onclick="buy('g',${i},${i*500})">🪙 ${i*500}</button></div>`;
-    for(let i=1; i<=50; i++) sH+=`<div class="card"><h3>Ship v${i}</h3><button onclick="buy('s',${i},${i*1000})">🪙 ${i*1000}</button></div>`;
-    for(let i=1; i<=10; i++) shH+=`<div class="card"><h3>Shield v${i}</h3><button onclick="buy('sh',${i},${i*2000})">🪙 ${i*2000}</button></div>`;
+    for(let i=1; i<=20; i++) gH+=`<div class="card">G-v${i}<button onclick="buy('g',${i},${i*500})">🪙 ${i*500}</button></div>`;
+    for(let i=1; i<=50; i++) sH+=`<div class="card">S-v${i}<button onclick="buy('s',${i},${i*1000})">🪙 ${i*1000}</button></div>`;
+    for(let i=1; i<=10; i++) shH+=`<div class="card">SH-Lv${i}<button onclick="buy('sh',${i},${i*2000})">🪙 ${i*2000}</button></div>`;
     document.getElementById('gun-grid').innerHTML=gH;
     document.getElementById('ship-grid').innerHTML=sH;
     document.getElementById('shield-grid').innerHTML=shH;
@@ -163,14 +158,12 @@ function loop(t) {
     if(!active) return requestAnimationFrame(loop);
     ctx.fillStyle='rgba(0,5,15,0.4)'; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // Player Ship
     ctx.save(); ctx.translate(pX, canvas.height-80);
     ctx.strokeStyle=`hsl(${shipLv*25},100%,60%)`; ctx.lineWidth=3;
     ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(20,15); ctx.lineTo(-20,15); ctx.closePath(); ctx.stroke();
     if(curSh>0){ ctx.beginPath(); ctx.arc(0,0,40,0,Math.PI*2); ctx.strokeStyle="#ffd700"; ctx.stroke(); }
     ctx.restore();
 
-    // Fire Logic
     let rate = Math.max(60, 300-(gunLv*12));
     if(t-lastFire > rate) {
         bullets.push({x:pX, y:canvas.height-100, vy:-15});
@@ -183,25 +176,31 @@ function loop(t) {
         if(b.y<0) bullets.splice(i,1);
     });
 
-    // Enemies Logic
-    let sector = Math.floor(gold/3000)+1;
-    if(sector%5===0 && !boss) { boss={x:canvas.width/2, y:-100, hp:sector*100, m:sector*100, d:2}; document.getElementById('boss-ui').style.display='block'; }
+    let difficulty = Math.floor(gold/3000)+1;
+    if(difficulty % 5 === 0 && !boss) {
+        boss = { x: canvas.width/2, y: -100, hp: difficulty*150, m: difficulty*150, d: 2 };
+        document.getElementById('boss-ui').style.display = 'block';
+    }
 
     if(boss) {
-        boss.y=Math.min(boss.y+1.5, 120); boss.x+=boss.d;
-        if(boss.x>canvas.width-80 || boss.x<80) boss.d*=-1;
-        ctx.strokeStyle="#a020f0"; ctx.strokeRect(boss.x-60, boss.y-30, 120, 60);
+        boss.y = Math.min(boss.y + 1, 120); boss.x += boss.d;
+        if(boss.x > canvas.width-60 || boss.x < 60) boss.d *= -1;
+        ctx.strokeStyle="#a020f0"; ctx.lineWidth=5; ctx.strokeRect(boss.x-50, boss.y-25, 100, 50);
         document.getElementById('boss-fill').style.width=(boss.hp/boss.m*100)+"%";
         bullets.forEach((b,bi)=>{
-            if(Math.abs(b.x-boss.x)<60 && Math.abs(b.y-boss.y)<30){
+            if(Math.abs(b.x-boss.x)<50 && Math.abs(b.y-boss.y)<25){
                 boss.hp--; bullets.splice(bi,1);
-                if(boss.hp<=0){ gold+=5000; boss=null; document.getElementById('boss-ui').style.display='none'; updateUI(); }
+                if(boss.hp <= 0) { gold += 5000; boss = null; document.getElementById('boss-ui').style.display='none'; updateUI(); }
             }
         });
-    } else if(Math.random()<0.03) { enemies.push({x:Math.random()*canvas.width, y:-50, hp:sector, type:sector%3}); }
+    }
+
+    if(!boss && Math.random() < 0.04) {
+        enemies.push({x: Math.random()*canvas.width, y: -50, hp: Math.max(1, Math.floor(difficulty/2)), type: difficulty%3});
+    }
 
     enemies.forEach((e,i)=>{
-        e.y+=(3+sector*0.1); ctx.strokeStyle="red";
+        e.y += 3; ctx.strokeStyle="red"; ctx.lineWidth=2;
         if(e.type===0) ctx.strokeRect(e.x-15, e.y-15, 30, 30);
         else { ctx.beginPath(); ctx.moveTo(e.x,e.y-15); ctx.lineTo(e.x+15,e.y+15); ctx.lineTo(e.x-15,e.y+15); ctx.closePath(); ctx.stroke(); }
         bullets.forEach((b,bi)=>{
@@ -211,19 +210,16 @@ function loop(t) {
             }
         });
         if(Math.abs(e.x-pX)<35 && Math.abs(e.y-(canvas.height-80))<35){
-            if(curSh>0) curSh-=10; else hp-=20;
+            if(curSh > 0) curSh -= 10; else hp -= 20;
             enemies.splice(i,1); updateUI();
-            if(hp<=0) location.reload();
+            if(hp <= 0) location.reload();
         }
     });
     requestAnimationFrame(loop);
 }
 
-const handleInput=(e)=>{ 
-    let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-    pX = x;
-};
-window.addEventListener('mousemove', handleInput); 
+const handleInput=(e)=>{ pX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; };
+window.addEventListener('mousemove', handleInput);
 window.addEventListener('touchmove', handleInput, {passive: false});
 </script>
 </body>
